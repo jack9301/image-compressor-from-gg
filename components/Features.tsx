@@ -7,8 +7,8 @@ const Features: React.FC = () => {
   return (
     <div className="mt-32 space-y-16">
       <div className="text-center space-y-4">
-        <h2 className="text-3xl font-bold">Everything you need in one tool.</h2>
-        <p className="text-slate-400 max-w-xl mx-auto">PixelShrink combines professional-grade compression with modern utility features.</p>
+        <h2 className="text-3xl font-bold">Everything you need just in one Place.</h2>
+        <p className="text-slate-400 max-w-xl mx-auto">ImageHero combines professional-grade compression with modern utility features.</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">

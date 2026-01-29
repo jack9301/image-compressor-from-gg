@@ -1,17 +1,15 @@
 
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Upload, 
   Settings, 
   Download, 
   Zap, 
-  ShieldCheck, 
   Trash2, 
-  Image as ImageIcon,
   CheckCircle2,
-  ChevronRight,
-  Info
+  Info,
+  Clock
 } from 'lucide-react';
 import JSZip from 'jszip';
 
@@ -20,11 +18,18 @@ import Hero from './components/Hero';
 import Dropzone from './components/Dropzone';
 import ImageEditor from './components/ImageEditor';
 import Features from './components/Features';
+import FAQ from './components/FAQ';
 import Footer from './components/Footer';
+import PrivacyPolicy from './components/PrivacyPolicy';
+import TermsOfService from './components/TermsOfService';
+import AboutUs from './components/AboutUs';
 import { ImageFile, CompressionSettings } from './types';
 import { processImage, formatSize } from './services/imageService';
 
+export type Page = 'home' | 'compress' | 'resize' | 'convert' | 'about' | 'privacy' | 'terms' | 'pdf-to-jpg' | 'jpg-to-pdf' | 'compress-pdf';
+
 const App: React.FC = () => {
+  const [currentPage, setCurrentPage] = useState<Page>('home');
   const [images, setImages] = useState<ImageFile[]>([]);
   const [globalSettings, setGlobalSettings] = useState<CompressionSettings>({
     quality: 80,
@@ -32,6 +37,17 @@ const App: React.FC = () => {
     resizeType: 'original'
   });
   const [isProcessing, setIsProcessing] = useState(false);
+
+  // Auto-configure settings based on current tool page
+  useEffect(() => {
+    if (currentPage === 'resize') {
+      setGlobalSettings(prev => ({ ...prev, resizeType: 'pixel', width: 1200, height: 800 }));
+    } else if (currentPage === 'compress') {
+      setGlobalSettings(prev => ({ ...prev, resizeType: 'original', quality: 60 }));
+    } else if (currentPage === 'convert') {
+      setGlobalSettings(prev => ({ ...prev, resizeType: 'original', format: 'image/webp' }));
+    }
+  }, [currentPage]);
 
   const handleFilesAdded = (files: File[]) => {
     const newImages: ImageFile[] = files.map(file => ({
@@ -91,26 +107,13 @@ const App: React.FC = () => {
   };
 
   const downloadZip = async () => {
-    const zip = new JSZip();
-    images.forEach((img, index) => {
-      if (img.compressedUrl && img.status === 'completed') {
-        const fileName = img.file.name.split('.')[0];
-        const ext = globalSettings.format.split('/')[1];
-        // Fetch the blob from the URL
-        zip.file(`${fileName}_compressed.${ext}`, img.file); // Fallback to original if blob isn't easily accessible
-        // In a real production app, you'd fetch the blob from the URL or store the blob in state
-      }
-    });
-
-    // To properly ZIP the *compressed* data, we actually need the blobs. 
-    // Let's refine the processAll to keep blobs or just re-generate for ZIP
     const zipContent = new JSZip();
     for (const img of images) {
       if (img.status === 'completed') {
         const result = await processImage(img.file, globalSettings);
         const fileName = img.file.name.split('.')[0];
         const ext = globalSettings.format.split('/')[1];
-        zipContent.file(`${fileName}_pixelshrink.${ext}`, result.blob);
+        zipContent.file(`${fileName}_imagehero.${ext}`, result.blob);
       }
     }
 
@@ -118,87 +121,98 @@ const App: React.FC = () => {
     const url = URL.createObjectURL(content);
     const link = document.createElement('a');
     link.href = url;
-    link.download = 'pixelshrink_images.zip';
+    link.download = `imagehero_${currentPage}_images.zip`;
     link.click();
     URL.revokeObjectURL(url);
   };
 
-  return (
-    <div className="min-h-screen bg-[#0f172a] text-slate-200">
-      <Header />
-      
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-20">
-        <Hero />
+  const navigateTo = (page: Page) => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
-        <div id="tools" className="mt-16 scroll-mt-24">
-          <AnimatePresence mode="wait">
-            {images.length === 0 ? (
-              <motion.div
-                key="dropzone"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-              >
-                <Dropzone onFilesAdded={handleFilesAdded} />
-              </motion.div>
-            ) : (
-              <motion.div
-                key="editor"
-                initial={{ opacity: 0, scale: 0.98 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className="space-y-8"
-              >
-                <div className="flex flex-col lg:flex-row gap-8 items-start">
-                  {/* Settings Panel */}
-                  <div className="w-full lg:w-1/3 glass p-6 rounded-3xl sticky top-24">
-                    <div className="flex items-center gap-2 mb-6">
-                      <Settings className="w-5 h-5 text-indigo-400" />
-                      <h2 className="text-xl font-semibold">Global Settings</h2>
-                    </div>
-                    
-                    <ImageEditor 
-                      settings={globalSettings} 
-                      setSettings={setGlobalSettings} 
-                      onProcess={processAll}
-                      isProcessing={isProcessing}
-                    />
+  const renderToolView = (title: string, description: string) => (
+    <motion.div
+      key={currentPage}
+      initial={{ opacity: 0, x: 10 }}
+      animate={{ opacity: 1, x: 0 }}
+      exit={{ opacity: 0, x: -10 }}
+      className="space-y-12"
+    >
+      <div className="text-center space-y-4 max-w-2xl mx-auto">
+        <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight">{title}</h1>
+        <p className="text-slate-400 text-lg">{description}</p>
+      </div>
 
-                    <div className="mt-8 pt-8 border-t border-white/10 flex flex-col gap-3">
-                      <button
-                        onClick={processAll}
-                        disabled={isProcessing}
-                        className="w-full py-4 px-6 rounded-2xl bg-indigo-600 hover:bg-indigo-500 font-semibold transition-all flex items-center justify-center gap-2 disabled:opacity-50 shadow-lg shadow-indigo-500/20"
-                      >
-                        {isProcessing ? (
-                          <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent" />
-                        ) : (
-                          <Zap className="w-5 h-5" />
-                        )}
-                        {isProcessing ? 'Optimizing...' : 'Optimize All Images'}
-                      </button>
-                      
-                      {images.some(img => img.status === 'completed') && (
-                        <button
-                          onClick={downloadZip}
-                          className="w-full py-4 px-6 rounded-2xl bg-slate-800 hover:bg-slate-700 font-semibold transition-all flex items-center justify-center gap-2 border border-white/10"
-                        >
-                          <Download className="w-5 h-5" />
-                          Download All (.ZIP)
-                        </button>
-                      )}
-                      
-                      <button
-                        onClick={clearAll}
-                        className="w-full py-3 px-6 rounded-2xl bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white font-medium transition-all flex items-center justify-center gap-2"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                        Clear All
-                      </button>
-                    </div>
+      <div id="tool-workspace" className="scroll-mt-24">
+        <AnimatePresence mode="wait">
+          {images.length === 0 ? (
+            <motion.div
+              key="dropzone"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+            >
+              <Dropzone onFilesAdded={handleFilesAdded} />
+            </motion.div>
+          ) : (
+            <motion.div
+              key="editor"
+              initial={{ opacity: 0, scale: 0.98 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="space-y-8"
+            >
+              <div className="flex flex-col lg:flex-row gap-8 items-start">
+                <div className="w-full lg:w-1/3 glass p-6 rounded-[2rem] sticky top-24">
+                  <div className="flex items-center gap-2 mb-6 border-b border-white/5 pb-4">
+                    <Settings className="w-5 h-5 text-indigo-400" />
+                    <h2 className="text-xl font-bold">Tool Settings</h2>
                   </div>
+                  
+                  <ImageEditor 
+                    settings={globalSettings} 
+                    setSettings={setGlobalSettings} 
+                    onProcess={processAll}
+                    isProcessing={isProcessing}
+                    mode={currentPage}
+                  />
 
-                  {/* Image List */}
-                  <div className="w-full lg:w-2/3 space-y-4">
+                  <div className="mt-8 pt-8 border-t border-white/10 flex flex-col gap-3">
+                    <button
+                      onClick={processAll}
+                      disabled={isProcessing}
+                      className="w-full py-4 px-6 rounded-2xl bg-indigo-600 hover:bg-indigo-500 font-bold transition-all flex items-center justify-center gap-2 disabled:opacity-50 shadow-xl shadow-indigo-600/20"
+                    >
+                      {isProcessing ? (
+                        <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent" />
+                      ) : (
+                        <Zap className="w-5 h-5" />
+                      )}
+                      {isProcessing ? 'Processing...' : `Apply to All`}
+                    </button>
+                    
+                    {images.some(img => img.status === 'completed') && (
+                      <button
+                        onClick={downloadZip}
+                        className="w-full py-4 px-6 rounded-2xl bg-white/5 hover:bg-white/10 font-bold transition-all flex items-center justify-center gap-2 border border-white/10"
+                      >
+                        <Download className="w-5 h-5" />
+                        Download All
+                      </button>
+                    )}
+                    
+                    <button
+                      onClick={clearAll}
+                      className="w-full py-3 px-6 rounded-2xl text-slate-500 hover:text-red-400 font-medium transition-all flex items-center justify-center gap-2"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                      Clear Workspace
+                    </button>
+                  </div>
+                </div>
+
+                <div className="w-full lg:w-2/3 space-y-4">
+                  <AnimatePresence>
                     {images.map((img) => (
                       <ImageCard 
                         key={img.id} 
@@ -207,32 +221,109 @@ const App: React.FC = () => {
                         settings={globalSettings}
                       />
                     ))}
-                    
-                    <button 
-                      onClick={() => document.getElementById('file-input')?.click()}
-                      className="w-full p-8 border-2 border-dashed border-white/10 rounded-3xl hover:border-indigo-500/50 hover:bg-indigo-500/5 transition-all group flex flex-col items-center justify-center gap-3 text-slate-400"
-                    >
-                      <Upload className="w-6 h-6 group-hover:scale-110 transition-transform" />
-                      <span>Add more images</span>
-                    </button>
-                    <input 
-                      id="file-input" 
-                      type="file" 
-                      multiple 
-                      className="hidden" 
-                      onChange={(e) => e.target.files && handleFilesAdded(Array.from(e.target.files))}
-                    />
-                  </div>
+                  </AnimatePresence>
+                  
+                  <button 
+                    onClick={() => document.getElementById('file-input')?.click()}
+                    className="w-full p-12 border-2 border-dashed border-white/10 rounded-[2.5rem] hover:border-indigo-500/50 hover:bg-indigo-500/5 transition-all group flex flex-col items-center justify-center gap-3 text-slate-400"
+                  >
+                    <Upload className="w-8 h-8 group-hover:scale-110 transition-transform text-indigo-400" />
+                    <span className="font-bold">Add more images to process</span>
+                  </button>
+                  <input 
+                    id="file-input" 
+                    type="file" 
+                    multiple 
+                    className="hidden" 
+                    onChange={(e) => e.target.files && handleFilesAdded(Array.from(e.target.files))}
+                  />
                 </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+      <Features />
+      <FAQ />
+    </motion.div>
+  );
 
-        <Features />
+  const renderPlaceholder = (title: string) => (
+    <motion.div
+      key={currentPage}
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      className="max-w-4xl mx-auto py-24 text-center space-y-8"
+    >
+      <div className="w-24 h-24 bg-indigo-600/10 rounded-[2rem] flex items-center justify-center mx-auto text-indigo-400">
+        <Clock className="w-12 h-12" />
+      </div>
+      <div className="space-y-4">
+        <h1 className="text-5xl font-black">{title}</h1>
+        <p className="text-slate-400 text-xl max-w-lg mx-auto leading-relaxed">
+          We're currently fine-tuning our PDF engine to bring you the same lightning-fast, local-only performance you love. Stay tuned!
+        </p>
+      </div>
+      <button 
+        onClick={() => navigateTo('home')}
+        className="px-8 py-4 bg-indigo-600 hover:bg-indigo-500 rounded-2xl font-bold transition-all shadow-xl shadow-indigo-600/20"
+      >
+        Go back to Home
+      </button>
+    </motion.div>
+  );
+
+  const renderContent = () => {
+    switch (currentPage) {
+      case 'privacy':
+        return <PrivacyPolicy key="privacy" onBack={() => navigateTo('home')} />;
+      case 'terms':
+        return <TermsOfService key="terms" onBack={() => navigateTo('home')} />;
+      case 'about':
+        return <AboutUs key="about" onBack={() => navigateTo('home')} />;
+      case 'compress':
+        return renderToolView("Image Compressor", "High-performance compression using optimized browser engines. Reduce size, keep quality.");
+      case 'resize':
+        return renderToolView("Image Resizer", "Precise pixel-perfect resizing. Scale by percentage, custom dimensions, or social presets.");
+      case 'convert':
+        return renderToolView("Image Converter", "Fast local conversion. Switch between WebP, PNG, and JPEG formats in batch.");
+      case 'pdf-to-jpg':
+        return renderPlaceholder("PDF to JPG");
+      case 'jpg-to-pdf':
+        return renderPlaceholder("JPG to PDF");
+      case 'compress-pdf':
+        return renderPlaceholder("Compress PDF");
+      default:
+        return (
+          <motion.div
+            key="home"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="space-y-16"
+          >
+            <Hero />
+            <div id="tools" className="scroll-mt-24">
+              <Dropzone onFilesAdded={handleFilesAdded} />
+            </div>
+            <Features />
+            <FAQ />
+          </motion.div>
+        );
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-[#0f172a] text-slate-200">
+      <Header onNavigate={navigateTo} activePage={currentPage} />
+      
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-20">
+        <AnimatePresence mode="wait">
+          {renderContent()}
+        </AnimatePresence>
       </main>
 
-      <Footer />
+      <Footer onNavigate={navigateTo} />
     </div>
   );
 };
@@ -245,30 +336,31 @@ const ImageCard: React.FC<{ img: ImageFile; onRemove: () => void; settings: Comp
   return (
     <motion.div
       layout
-      initial={{ opacity: 0, x: 20 }}
-      animate={{ opacity: 1, x: 0 }}
-      className="glass p-4 sm:p-6 rounded-3xl group relative overflow-hidden"
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.95 }}
+      className="glass p-4 sm:p-5 rounded-3xl group relative overflow-hidden border border-white/5"
     >
       <div className="flex flex-col sm:flex-row gap-6 items-center">
-        <div className="relative w-32 h-32 sm:w-40 sm:h-40 shrink-0 overflow-hidden rounded-2xl bg-slate-900 border border-white/10 shadow-inner">
+        <div className="relative w-28 h-28 sm:w-36 sm:h-36 shrink-0 overflow-hidden rounded-2xl bg-slate-900 border border-white/10 shadow-inner">
           <img 
             src={img.compressedUrl || img.previewUrl} 
             alt="Preview" 
             className="w-full h-full object-cover transition-transform group-hover:scale-105"
           />
           {img.status === 'completed' && (
-            <div className="absolute top-2 right-2 p-1 bg-green-500 rounded-full shadow-lg">
-              <CheckCircle2 className="w-4 h-4 text-white" />
+            <div className="absolute top-2 right-2 p-1.5 bg-green-500 rounded-full shadow-lg border-2 border-slate-900">
+              <CheckCircle2 className="w-3 h-3 text-white" />
             </div>
           )}
         </div>
 
         <div className="flex-1 min-w-0 space-y-3 w-full">
           <div className="flex items-center justify-between gap-4">
-            <h3 className="font-semibold text-lg truncate text-slate-100">{img.file.name}</h3>
+            <h3 className="font-bold text-lg truncate text-slate-100">{img.file.name}</h3>
             <button 
               onClick={onRemove}
-              className="p-2 hover:bg-red-500/10 text-slate-500 hover:text-red-400 rounded-lg transition-colors"
+              className="p-2 hover:bg-red-500/10 text-slate-500 hover:text-red-400 rounded-xl transition-colors"
             >
               <Trash2 className="w-4 h-4" />
             </button>
@@ -276,12 +368,12 @@ const ImageCard: React.FC<{ img: ImageFile; onRemove: () => void; settings: Comp
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1">
-              <p className="text-xs text-slate-500 uppercase font-medium">Original</p>
-              <p className="text-sm font-medium">{formatSize(img.originalSize)}</p>
+              <p className="text-[10px] text-slate-500 uppercase font-extrabold tracking-widest">Original</p>
+              <p className="text-sm font-semibold">{formatSize(img.originalSize)}</p>
             </div>
             <div className="space-y-1">
-              <p className="text-xs text-slate-500 uppercase font-medium">Result</p>
-              <p className="text-sm font-medium text-indigo-400">
+              <p className="text-[10px] text-slate-500 uppercase font-extrabold tracking-widest">Processed</p>
+              <p className="text-sm font-bold text-indigo-400">
                 {img.compressedSize ? formatSize(img.compressedSize) : '--'}
               </p>
             </div>
@@ -289,12 +381,12 @@ const ImageCard: React.FC<{ img: ImageFile; onRemove: () => void; settings: Comp
 
           {img.status === 'completed' && (
             <div className="flex items-center gap-4">
-              <div className="px-3 py-1 bg-green-500/10 text-green-400 text-xs font-bold rounded-full">
-                Saved {reduction}%
+              <div className={`px-3 py-1 text-xs font-black rounded-full ${reduction > 0 ? 'bg-green-500/10 text-green-400' : 'bg-slate-500/10 text-slate-400'}`}>
+                {reduction > 0 ? `-${reduction}% SIZE` : 'READY'}
               </div>
               {img.width > 0 && (
-                <div className="text-xs text-slate-500">
-                  {img.width} × {img.height}px
+                <div className="text-[10px] font-bold text-slate-500 bg-white/5 px-2 py-1 rounded-md">
+                  {img.width} × {img.height} PX
                 </div>
               )}
             </div>
@@ -305,16 +397,16 @@ const ImageCard: React.FC<{ img: ImageFile; onRemove: () => void; settings: Comp
           {img.status === 'completed' && img.compressedUrl ? (
             <a
               href={img.compressedUrl}
-              download={`${img.file.name.split('.')[0]}_pixelshrink.${settings.format.split('/')[1]}`}
-              className="w-full sm:w-auto px-6 py-3 bg-indigo-600/10 text-indigo-400 hover:bg-indigo-600 hover:text-white font-semibold rounded-xl transition-all flex items-center justify-center gap-2 border border-indigo-500/30"
+              download={`${img.file.name.split('.')[0]}_imagehero.${settings.format.split('/')[1]}`}
+              className="w-full sm:w-auto px-6 py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/20"
             >
               <Download className="w-4 h-4" />
               Download
             </a>
           ) : (
-             <div className="px-6 py-3 text-slate-500 text-sm font-medium flex items-center gap-2">
+             <div className="px-6 py-3 text-slate-500 text-sm font-bold flex items-center justify-center gap-2 border border-dashed border-white/10 rounded-xl">
                <Info className="w-4 h-4" />
-               Ready to compress
+               Pending
              </div>
           )}
         </div>

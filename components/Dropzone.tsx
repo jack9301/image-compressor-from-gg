@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { Upload, Image as ImageIcon, Files } from 'lucide-react';
@@ -24,13 +23,15 @@ const Dropzone: React.FC<Props> = ({ onFilesAdded }) => {
     e.preventDefault();
     setIsDragging(false);
     if (e.dataTransfer.files) {
-      onFilesAdded(Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/')));
+      // Fix: Explicitly cast Array.from(FileList) to File[] to ensure 'type' property is accessible
+      onFilesAdded((Array.from(e.dataTransfer.files) as File[]).filter(f => f.type.startsWith('image/')));
     }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
-      onFilesAdded(Array.from(e.target.files).filter(f => f.type.startsWith('image/')));
+      // Fix: Explicitly cast Array.from(FileList) to File[] to ensure 'type' property is accessible
+      onFilesAdded((Array.from(e.target.files) as File[]).filter(f => f.type.startsWith('image/')));
     }
   };
 
