@@ -39,6 +39,10 @@ export const processImage = async (
         // Draw image with resizing
         ctx.drawImage(img, 0, 0, targetWidth, targetHeight);
 
+        // Determine final quality
+        // If compression is disabled, we use 100% quality (1.0)
+        const finalQuality = settings.applyCompression === false ? 1.0 : settings.quality / 100;
+
         // Compress and Convert
         canvas.toBlob(
           (blob) => {
@@ -54,7 +58,7 @@ export const processImage = async (
             }
           },
           settings.format,
-          settings.quality / 100
+          finalQuality
         );
       };
       img.onerror = () => reject(new Error('Image load error'));

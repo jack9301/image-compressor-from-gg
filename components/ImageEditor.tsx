@@ -10,7 +10,9 @@ import {
   Monitor, 
   Youtube,
   Type,
-  ChevronRight
+  ChevronRight,
+  ZapOff,
+  Zap
 } from 'lucide-react';
 import { CompressionSettings, SocialPreset } from '../types';
 import { SOCIAL_PRESETS, FORMAT_OPTIONS } from '../constants';
@@ -36,6 +38,10 @@ const ImageEditor: React.FC<Props> = ({ settings, setSettings, mode }) => {
     setSettings({ ...settings, resizeType: type });
   };
 
+  const handleToggleCompression = () => {
+    setSettings({ ...settings, applyCompression: !settings.applyCompression });
+  };
+
   const handleSocialPreset = (preset: SocialPreset) => {
     setSettings({ 
       ...settings, 
@@ -46,25 +52,54 @@ const ImageEditor: React.FC<Props> = ({ settings, setSettings, mode }) => {
     });
   };
 
+  const showCompressionToggle = mode === 'resize' || mode === 'convert';
+
   return (
     <div className="space-y-10">
       {/* Quality Section - prioritized in 'compress' mode */}
       <div className={`space-y-4 transition-all ${mode === 'compress' ? 'ring-2 ring-indigo-500/20 p-4 rounded-2xl bg-indigo-500/5' : ''}`}>
-        <div className="flex justify-between items-center">
-          <label className="text-sm font-bold text-slate-300">Compression Strength</label>
-          <span className="text-indigo-400 font-black bg-indigo-400/10 px-2 py-1 rounded-md text-xs">{settings.quality}%</span>
-        </div>
-        <input 
-          type="range" 
-          min="10" 
-          max="100" 
-          value={settings.quality} 
-          onChange={handleQualityChange}
-          className="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-indigo-500"
-        />
-        <div className="flex justify-between text-[10px] text-slate-600 font-black uppercase tracking-widest">
-          <span>Max Space</span>
-          <span>Max Quality</span>
+        
+        {showCompressionToggle && (
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2">
+              <span className={`p-1.5 rounded-lg ${settings.applyCompression ? 'bg-indigo-600/20 text-indigo-400' : 'bg-slate-800 text-slate-500'}`}>
+                {settings.applyCompression ? <Zap className="w-3.5 h-3.5" /> : <ZapOff className="w-3.5 h-3.5" />}
+              </span>
+              <label className="text-xs font-bold text-slate-300">Enable Compression</label>
+            </div>
+            <button
+              onClick={handleToggleCompression}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${
+                settings.applyCompression ? 'bg-indigo-600' : 'bg-slate-800'
+              }`}
+            >
+              <span
+                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                  settings.applyCompression ? 'translate-x-6' : 'translate-x-1'
+                }`}
+              />
+            </button>
+          </div>
+        )}
+
+        <div className={`space-y-4 transition-opacity duration-300 ${!settings.applyCompression && showCompressionToggle ? 'opacity-30 pointer-events-none' : 'opacity-100'}`}>
+          <div className="flex justify-between items-center">
+            <label className="text-sm font-bold text-slate-300">Compression Strength</label>
+            <span className="text-indigo-400 font-black bg-indigo-400/10 px-2 py-1 rounded-md text-xs">{settings.quality}%</span>
+          </div>
+          <input 
+            type="range" 
+            min="10" 
+            max="100" 
+            value={settings.quality} 
+            onChange={handleQualityChange}
+            disabled={!settings.applyCompression && showCompressionToggle}
+            className="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-indigo-500"
+          />
+          <div className="flex justify-between text-[10px] text-slate-600 font-black uppercase tracking-widest">
+            <span>Max Space</span>
+            <span>Max Quality</span>
+          </div>
         </div>
       </div>
 

@@ -9,7 +9,8 @@ import {
   Trash2, 
   CheckCircle2,
   Info,
-  Clock
+  Clock,
+  Maximize
 } from 'lucide-react';
 import JSZip from 'jszip';
 
@@ -28,13 +29,30 @@ import { processImage, formatSize } from './services/imageService';
 
 export type Page = 'home' | 'compress' | 'resize' | 'convert' | 'about' | 'privacy' | 'terms' | 'pdf-to-jpg' | 'jpg-to-pdf' | 'compress-pdf';
 
+const getImageDimensions = (file: File): Promise<{ width: number; height: number }> => {
+  return new Promise((resolve) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      resolve({ width: img.naturalWidth, height: img.naturalHeight });
+      URL.revokeObjectURL(url);
+    };
+    img.onerror = () => {
+      resolve({ width: 0, height: 0 });
+      URL.revokeObjectURL(url);
+    };
+    img.src = url;
+  });
+};
+
 const App: React.FC = () => {
   const [currentPage, setCurrentPage] = useState<Page>('home');
   const [images, setImages] = useState<ImageFile[]>([]);
   const [globalSettings, setGlobalSettings] = useState<CompressionSettings>({
     quality: 80,
     format: 'image/jpeg',
-    resizeType: 'original'
+    resizeType: 'original',
+    applyCompression: true
   });
   const [isProcessing, setIsProcessing] = useState(false);
 
@@ -43,26 +61,35 @@ const App: React.FC = () => {
     if (currentPage === 'resize') {
       setGlobalSettings(prev => ({ ...prev, resizeType: 'pixel', width: 1200, height: 800 }));
     } else if (currentPage === 'compress') {
-      setGlobalSettings(prev => ({ ...prev, resizeType: 'original', quality: 60 }));
+      setGlobalSettings(prev => ({ ...prev, resizeType: 'original', quality: 60, applyCompression: true }));
     } else if (currentPage === 'convert') {
       setGlobalSettings(prev => ({ ...prev, resizeType: 'original', format: 'image/webp' }));
     }
   }, [currentPage]);
 
-  const handleFilesAdded = (files: File[]) => {
-    const newImages: ImageFile[] = files.map(file => ({
-      id: Math.random().toString(36).substr(2, 9),
-      file,
-      previewUrl: URL.createObjectURL(file),
-      originalSize: file.size,
-      compressedSize: null,
-      compressedUrl: null,
-      status: 'idle',
-      width: 0,
-      height: 0,
-      format: file.type
+  const handleFilesAdded = async (files: File[]) => {
+    const newImages: ImageFile[] = await Promise.all(files.map(async (file) => {
+      const dimensions = await getImageDimensions(file);
+      return {
+        id: Math.random().toString(36).substr(2, 9),
+        file,
+        previewUrl: URL.createObjectURL(file),
+        originalSize: file.size,
+        compressedSize: null,
+        compressedUrl: null,
+        status: 'idle',
+        width: dimensions.width,
+        height: dimensions.height,
+        format: file.type
+      };
     }));
+    
     setImages(prev => [...prev, ...newImages]);
+    
+    // Fix: Automatically navigate to the tool workspace if uploading from home page
+    if (currentPage === 'home' && files.length > 0) {
+      setCurrentPage('compress');
+    }
   };
 
   const removeImage = (id: string) => {
@@ -94,8 +121,8 @@ const App: React.FC = () => {
           ...img,
           compressedUrl: result.url,
           compressedSize: result.blob.size,
-          width: result.width,
-          height: result.height,
+          width: result.width, // Updated with target width
+          height: result.height, // Updated with target height
           status: 'completed' as const
         };
       } catch (err) {
@@ -203,15 +230,28 @@ const App: React.FC = () => {
                     
                     <button
                       onClick={clearAll}
-                      className="w-full py-3 px-6 rounded-2xl text-slate-500 hover:text-red-400 font-medium transition-all flex items-center justify-center gap-2"
+                      className="w-full py-3 px-6 rounded-2xl text-slate-500 hover:text-red-400 font-medium transition-all flex items-center justify-center gap-2 group"
                     >
-                      <Trash2 className="w-4 h-4" />
+                      <Trash2 className="w-4 h-4 group-hover:rotate-12 transition-transform" />
                       Clear Workspace
                     </button>
                   </div>
                 </div>
 
                 <div className="w-full lg:w-2/3 space-y-4">
+                  <div className="flex items-center justify-between px-2 mb-2">
+                    <span className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">
+                      Queue ({images.length} {images.length === 1 ? 'Image' : 'Images'})
+                    </span>
+                    <button 
+                      onClick={clearAll}
+                      className="text-[10px] font-black uppercase tracking-widest text-slate-500 hover:text-red-400 flex items-center gap-1.5 transition-colors px-3 py-1.5 rounded-lg hover:bg-red-400/5"
+                    >
+                      <Trash2 className="w-3 h-3" />
+                      Delete All
+                    </button>
+                  </div>
+
                   <AnimatePresence>
                     {images.map((img) => (
                       <ImageCard 
@@ -369,28 +409,40 @@ const ImageCard: React.FC<{ img: ImageFile; onRemove: () => void; settings: Comp
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1">
               <p className="text-[10px] text-slate-500 uppercase font-extrabold tracking-widest">Original</p>
-              <p className="text-sm font-semibold">{formatSize(img.originalSize)}</p>
+              <div className="flex flex-col">
+                <p className="text-sm font-semibold">{formatSize(img.originalSize)}</p>
+                <p className="text-[10px] font-bold text-slate-600 flex items-center gap-1">
+                  <Maximize className="w-2.5 h-2.5" />
+                  {img.width || '--'} × {img.height || '--'} px
+                </p>
+              </div>
             </div>
             <div className="space-y-1">
               <p className="text-[10px] text-slate-500 uppercase font-extrabold tracking-widest">Processed</p>
-              <p className="text-sm font-bold text-indigo-400">
-                {img.compressedSize ? formatSize(img.compressedSize) : '--'}
-              </p>
+              <div className="flex flex-col">
+                <p className="text-sm font-bold text-indigo-400">
+                  {img.compressedSize ? formatSize(img.compressedSize) : '--'}
+                </p>
+                {img.status === 'completed' && (
+                  <p className="text-[10px] font-bold text-indigo-400/60 flex items-center gap-1">
+                    <Maximize className="w-2.5 h-2.5" />
+                    {img.width} × {img.height} px
+                  </p>
+                )}
+              </div>
             </div>
           </div>
 
-          {img.status === 'completed' && (
-            <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4">
+            {img.status === 'completed' && (
               <div className={`px-3 py-1 text-xs font-black rounded-full ${reduction > 0 ? 'bg-green-500/10 text-green-400' : 'bg-slate-500/10 text-slate-400'}`}>
-                {reduction > 0 ? `-${reduction}% SIZE` : 'READY'}
+                {reduction > 0 ? `-${reduction}% SIZE` : 'SAME SIZE'}
               </div>
-              {img.width > 0 && (
-                <div className="text-[10px] font-bold text-slate-500 bg-white/5 px-2 py-1 rounded-md">
-                  {img.width} × {img.height} PX
-                </div>
-              )}
+            )}
+            <div className={`px-2 py-1 text-[10px] font-black rounded-md bg-white/5 uppercase tracking-tighter ${img.status === 'idle' ? 'text-slate-500 animate-pulse' : 'text-slate-400'}`}>
+              {img.status === 'idle' ? 'In Queue' : img.status === 'processing' ? 'Processing...' : 'Ready for export'}
             </div>
-          )}
+          </div>
         </div>
 
         <div className="shrink-0 w-full sm:w-auto">

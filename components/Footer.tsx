@@ -79,7 +79,7 @@ const Footer: React.FC<Props> = ({ onNavigate }) => {
             </div>
             
             <div className="text-[11px] text-slate-600 font-black uppercase tracking-[0.2em]">
-              &copy; {new Date().getFullYear()} IMAGEHERO CORP.
+              &copy; {new Date().getFullYear()} IMAGEHERO 
             </div>
           </div>
         </div>

@@ -16,6 +16,7 @@ export interface CompressionSettings {
   quality: number;
   format: string;
   resizeType: 'original' | 'pixel' | 'percentage' | 'social';
+  applyCompression?: boolean;
   width?: number;
   height?: number;
   percentage?: number;
