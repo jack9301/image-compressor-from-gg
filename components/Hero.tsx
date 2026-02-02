@@ -13,7 +13,7 @@ const Hero: React.FC = () => {
         className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass border border-white/10 text-indigo-400 text-sm font-medium mb-4"
       >
         <ShieldCheck className="w-4 h-4" />
-        100% Secure & Client-Side Processing
+        100% Private Client-Side Optimization
       </motion.div>
 
       <motion.h1 
@@ -22,18 +22,18 @@ const Hero: React.FC = () => {
         transition={{ delay: 0.2 }}
         className="text-5xl md:text-7xl font-extrabold tracking-tight"
       >
-        The Professional way to <br />
-        <span className="text-gradient">Compress Images.</span>
+        Free Online <br />
+        <span className="text-gradient">Image Compressor.</span>
       </motion.h1>
 
-      <motion.p
+      <motion.h2
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3 }}
-        className="max-w-2xl mx-auto text-lg text-slate-400"
+        className="max-w-2xl mx-auto text-lg text-slate-400 font-medium"
       >
-        Optimized, high-speed, and free. Resize, convert and compress your images without losing quality, all happening instantly in your browser.
-      </motion.p>
+        Optimized, high-speed, and secure. Resize, convert and compress images without server uploads. 100% private processing happens instantly in your browser.
+      </motion.h2>
 
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -41,9 +41,9 @@ const Hero: React.FC = () => {
         transition={{ delay: 0.4 }}
         className="flex flex-wrap items-center justify-center gap-8 pt-8"
       >
-        <HeroFeature icon={<Zap />} text="Lightning Fast" />
-        <HeroFeature icon={<Globe />} text="No Server Upload" />
-        <HeroFeature icon={<Cpu />} text="Edge AI Engine" />
+        <HeroFeature icon={<Zap aria-hidden="true" />} text="Lightning Fast" />
+        <HeroFeature icon={<Globe aria-hidden="true" />} text="No Upload Required" />
+        <HeroFeature icon={<Cpu aria-hidden="true" />} text="Browser-Only Engine" />
       </motion.div>
     </div>
   );

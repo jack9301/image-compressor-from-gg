@@ -37,7 +37,6 @@ const Footer: React.FC<Props> = ({ onNavigate }) => {
                   <FooterLink onClick={() => onNavigate('compress')} label="Compress" />
                   <FooterLink onClick={() => onNavigate('resize')} label="Resize" />
                   <FooterLink onClick={() => onNavigate('convert')} label="Convert" />
-                  <FooterLink onClick={() => onNavigate('home')} label="Tools Home" />
                 </nav>
               </div>
               <div className="space-y-6">
@@ -79,7 +78,7 @@ const Footer: React.FC<Props> = ({ onNavigate }) => {
             </div>
             
             <div className="text-[11px] text-slate-600 font-black uppercase tracking-[0.2em]">
-              &copy; {new Date().getFullYear()} IMAGEHERO 
+              &copy; {new Date().getFullYear()} IMAGEHERO CORP.
             </div>
           </div>
         </div>

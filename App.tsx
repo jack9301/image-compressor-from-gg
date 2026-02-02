@@ -10,7 +10,9 @@ import {
   CheckCircle2,
   Info,
   Clock,
-  Maximize
+  Maximize,
+  Eye,
+  X
 } from 'lucide-react';
 import JSZip from 'jszip';
 
@@ -55,15 +57,34 @@ const App: React.FC = () => {
     applyCompression: true
   });
   const [isProcessing, setIsProcessing] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
-  // Auto-configure settings based on current tool page
+  // SEO: Update page meta based on current tool
   useEffect(() => {
-    if (currentPage === 'resize') {
-      setGlobalSettings(prev => ({ ...prev, resizeType: 'pixel', width: 1200, height: 800 }));
-    } else if (currentPage === 'compress') {
-      setGlobalSettings(prev => ({ ...prev, resizeType: 'original', quality: 60, applyCompression: true }));
-    } else if (currentPage === 'convert') {
-      setGlobalSettings(prev => ({ ...prev, resizeType: 'original', format: 'image/webp' }));
+    const metaDesc = document.querySelector('meta[name="description"]');
+    
+    switch(currentPage) {
+      case 'compress':
+        document.title = "Compress Image Online - Reduce File Size without Quality Loss | ImageHero";
+        metaDesc?.setAttribute('content', 'Use our fast image compressor to shrink JPEG, PNG, and WebP files. Professional-grade compression with total privacy.');
+        setGlobalSettings(prev => ({ ...prev, resizeType: 'original', quality: 60, applyCompression: true }));
+        break;
+      case 'resize':
+        document.title = "Resize Image Online - Batch Image Resizer & Scaler | ImageHero";
+        metaDesc?.setAttribute('content', 'Resize images to any dimensions or social media presets. High-quality scaling for Instagram, Facebook, and more.');
+        setGlobalSettings(prev => ({ ...prev, resizeType: 'pixel', width: 1200, height: 800 }));
+        break;
+      case 'convert':
+        document.title = "Convert Image Format - Fast PNG, JPG, WebP Converter | ImageHero";
+        metaDesc?.setAttribute('content', 'Batch convert images between WebP, PNG, and JPEG instantly. All processing is local for 100% privacy.');
+        setGlobalSettings(prev => ({ ...prev, resizeType: 'original', format: 'image/webp' }));
+        break;
+      case 'about':
+        document.title = "About ImageHero - The Privacy-First Image Optimizer";
+        break;
+      default:
+        document.title = "ImageHero | Free Online Image Compressor, Resizer & Converter";
+        metaDesc?.setAttribute('content', 'Compress, resize, and convert images 100% privately in your browser. No server uploads. Fast, batch processing for JPEG, PNG, and WebP.');
     }
   }, [currentPage]);
 
@@ -86,7 +107,6 @@ const App: React.FC = () => {
     
     setImages(prev => [...prev, ...newImages]);
     
-    // Fix: Automatically navigate to the tool workspace if uploading from home page
     if (currentPage === 'home' && files.length > 0) {
       setCurrentPage('compress');
     }
@@ -121,8 +141,8 @@ const App: React.FC = () => {
           ...img,
           compressedUrl: result.url,
           compressedSize: result.blob.size,
-          width: result.width, // Updated with target width
-          height: result.height, // Updated with target height
+          width: result.width,
+          height: result.height,
           status: 'completed' as const
         };
       } catch (err) {
@@ -259,6 +279,7 @@ const App: React.FC = () => {
                         img={img} 
                         onRemove={() => removeImage(img.id)} 
                         settings={globalSettings}
+                        onPreview={(url) => setPreviewUrl(url)}
                       />
                     ))}
                   </AnimatePresence>
@@ -283,6 +304,13 @@ const App: React.FC = () => {
           )}
         </AnimatePresence>
       </div>
+
+      <AnimatePresence>
+        {previewUrl && (
+          <ImageLightbox url={previewUrl} onClose={() => setPreviewUrl(null)} />
+        )}
+      </AnimatePresence>
+
       <Features />
       <FAQ />
     </motion.div>
@@ -368,13 +396,47 @@ const App: React.FC = () => {
   );
 };
 
-const ImageCard: React.FC<{ img: ImageFile; onRemove: () => void; settings: CompressionSettings }> = ({ img, onRemove, settings }) => {
+const ImageLightbox: React.FC<{ url: string; onClose: () => void }> = ({ url, onClose }) => (
+  <motion.div
+    initial={{ opacity: 0 }}
+    animate={{ opacity: 1 }}
+    exit={{ opacity: 0 }}
+    className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-12 bg-slate-950/90 backdrop-blur-xl"
+    onClick={onClose}
+  >
+    <motion.div
+      initial={{ scale: 0.9, opacity: 0 }}
+      animate={{ scale: 1, opacity: 1 }}
+      exit={{ scale: 0.9, opacity: 0 }}
+      className="relative max-w-full max-h-full glass rounded-[2.5rem] overflow-hidden shadow-2xl p-2 border-white/20"
+      onClick={(e) => e.stopPropagation()}
+    >
+      <button 
+        onClick={onClose}
+        className="absolute top-6 right-6 z-10 p-2 bg-black/40 hover:bg-black/60 text-white rounded-full backdrop-blur-md border border-white/10 transition-colors"
+      >
+        <X className="w-6 h-6" />
+      </button>
+      <img src={url} alt="Processed Image Preview" className="max-w-full max-h-[85vh] object-contain rounded-3xl block mx-auto" />
+      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 px-6 py-2 bg-black/40 backdrop-blur-md rounded-full border border-white/10 text-[10px] font-black uppercase tracking-widest text-slate-300">
+        Full Scale View
+      </div>
+    </motion.div>
+  </motion.div>
+);
+
+const ImageCard: React.FC<{ 
+  img: ImageFile; 
+  onRemove: () => void; 
+  settings: CompressionSettings;
+  onPreview: (url: string) => void;
+}> = ({ img, onRemove, settings, onPreview }) => {
   const reduction = img.compressedSize 
     ? Math.round(((img.originalSize - img.compressedSize) / img.originalSize) * 100) 
     : 0;
 
   return (
-    <motion.div
+    <motion.article
       layout
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
@@ -385,7 +447,7 @@ const ImageCard: React.FC<{ img: ImageFile; onRemove: () => void; settings: Comp
         <div className="relative w-28 h-28 sm:w-36 sm:h-36 shrink-0 overflow-hidden rounded-2xl bg-slate-900 border border-white/10 shadow-inner">
           <img 
             src={img.compressedUrl || img.previewUrl} 
-            alt="Preview" 
+            alt={`Preview of ${img.file.name}`} 
             className="w-full h-full object-cover transition-transform group-hover:scale-105"
           />
           {img.status === 'completed' && (
@@ -400,6 +462,7 @@ const ImageCard: React.FC<{ img: ImageFile; onRemove: () => void; settings: Comp
             <h3 className="font-bold text-lg truncate text-slate-100">{img.file.name}</h3>
             <button 
               onClick={onRemove}
+              aria-label="Remove image"
               className="p-2 hover:bg-red-500/10 text-slate-500 hover:text-red-400 rounded-xl transition-colors"
             >
               <Trash2 className="w-4 h-4" />
@@ -445,16 +508,25 @@ const ImageCard: React.FC<{ img: ImageFile; onRemove: () => void; settings: Comp
           </div>
         </div>
 
-        <div className="shrink-0 w-full sm:w-auto">
+        <div className="shrink-0 w-full sm:w-auto flex flex-col gap-2">
           {img.status === 'completed' && img.compressedUrl ? (
-            <a
-              href={img.compressedUrl}
-              download={`${img.file.name.split('.')[0]}_imagehero.${settings.format.split('/')[1]}`}
-              className="w-full sm:w-auto px-6 py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/20"
-            >
-              <Download className="w-4 h-4" />
-              Download
-            </a>
+            <>
+              <button
+                onClick={() => onPreview(img.compressedUrl!)}
+                className="w-full sm:w-auto px-6 py-3 bg-white/5 hover:bg-white/10 text-indigo-400 font-bold rounded-xl transition-all flex items-center justify-center gap-2 border border-white/10"
+              >
+                <Eye className="w-4 h-4" />
+                Preview
+              </button>
+              <a
+                href={img.compressedUrl}
+                download={`${img.file.name.split('.')[0]}_imagehero.${settings.format.split('/')[1]}`}
+                className="w-full sm:w-auto px-6 py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/20"
+              >
+                <Download className="w-4 h-4" />
+                Download
+              </a>
+            </>
           ) : (
              <div className="px-6 py-3 text-slate-500 text-sm font-bold flex items-center justify-center gap-2 border border-dashed border-white/10 rounded-xl">
                <Info className="w-4 h-4" />
@@ -463,7 +535,7 @@ const ImageCard: React.FC<{ img: ImageFile; onRemove: () => void; settings: Comp
           )}
         </div>
       </div>
-    </motion.div>
+    </motion.article>
   );
 };
 
