@@ -1,3 +1,4 @@
+
 import React, { useState, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { Upload, Image as ImageIcon, Files } from 'lucide-react';
@@ -23,14 +24,12 @@ const Dropzone: React.FC<Props> = ({ onFilesAdded }) => {
     e.preventDefault();
     setIsDragging(false);
     if (e.dataTransfer.files) {
-      // Fix: Explicitly cast Array.from(FileList) to File[] to ensure 'type' property is accessible
       onFilesAdded((Array.from(e.dataTransfer.files) as File[]).filter(f => f.type.startsWith('image/')));
     }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
-      // Fix: Explicitly cast Array.from(FileList) to File[] to ensure 'type' property is accessible
       onFilesAdded((Array.from(e.target.files) as File[]).filter(f => f.type.startsWith('image/')));
     }
   };
@@ -49,10 +48,10 @@ const Dropzone: React.FC<Props> = ({ onFilesAdded }) => {
         className={`
           relative cursor-pointer group overflow-hidden
           border-2 border-dashed rounded-[2.5rem] p-16
-          transition-all duration-300
+          transition-all duration-300 transition-theme
           ${isDragging 
             ? 'border-indigo-500 bg-indigo-500/10' 
-            : 'border-white/10 hover:border-indigo-500/50 hover:bg-white/5'
+            : 'border-black/5 dark:border-white/10 hover:border-indigo-500/50 hover:bg-black/[0.02] dark:hover:bg-white/5'
           }
         `}
       >
@@ -62,20 +61,20 @@ const Dropzone: React.FC<Props> = ({ onFilesAdded }) => {
           </div>
           
           <div className="space-y-2">
-            <h3 className="text-2xl font-bold">Drop your images here</h3>
-            <p className="text-slate-400">
+            <h3 className="text-2xl font-bold dark:text-white">Drop your images here</h3>
+            <p className="text-slate-500 dark:text-slate-400">
               or click to browse from your computer <br />
-              <span className="text-xs uppercase tracking-widest font-bold mt-2 inline-block text-indigo-400">supports PNG, JPG, WEBP</span>
+              <span className="text-xs uppercase tracking-widest font-bold mt-2 inline-block text-indigo-600 dark:text-indigo-400">supports PNG, JPG, WEBP</span>
             </p>
           </div>
 
           <div className="flex items-center gap-4 mt-4">
-             <span className="px-4 py-2 rounded-xl glass border border-white/5 flex items-center gap-2 text-sm">
-                <Files className="w-4 h-4 text-indigo-400" />
+             <span className="px-4 py-2 rounded-xl glass flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200">
+                <Files className="w-4 h-4 text-indigo-500 dark:text-indigo-400" />
                 Multiple Files
              </span>
-             <span className="px-4 py-2 rounded-xl glass border border-white/5 flex items-center gap-2 text-sm">
-                <ImageIcon className="w-4 h-4 text-purple-400" />
+             <span className="px-4 py-2 rounded-xl glass flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200">
+                <ImageIcon className="w-4 h-4 text-purple-500 dark:text-purple-400" />
                 Original Quality
              </span>
           </div>
@@ -91,7 +90,7 @@ const Dropzone: React.FC<Props> = ({ onFilesAdded }) => {
         />
 
         {/* Animated Background Blur */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-indigo-600/20 blur-[100px] pointer-events-none rounded-full" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-indigo-600/10 dark:bg-indigo-600/20 blur-[100px] pointer-events-none rounded-full" />
       </motion.div>
     </div>
   );

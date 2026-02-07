@@ -10,7 +10,7 @@ const Hero: React.FC = () => {
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.5 }}
-        className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass border border-white/10 text-indigo-400 text-sm font-medium mb-4"
+        className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass text-indigo-600 dark:text-indigo-400 text-sm font-medium mb-4"
       >
         <ShieldCheck className="w-4 h-4" />
         100% Private Client-Side Optimization
@@ -20,7 +20,7 @@ const Hero: React.FC = () => {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
-        className="text-5xl md:text-7xl font-extrabold tracking-tight"
+        className="text-5xl md:text-7xl font-extrabold tracking-tight text-slate-900 dark:text-white"
       >
         Free Online <br />
         <span className="text-gradient">Image Compressor.</span>
@@ -30,7 +30,7 @@ const Hero: React.FC = () => {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3 }}
-        className="max-w-2xl mx-auto text-lg text-slate-400 font-medium"
+        className="max-w-2xl mx-auto text-lg text-slate-600 dark:text-slate-400 font-medium"
       >
         Optimized, high-speed, and secure. Resize, convert and compress images without server uploads. 100% private processing happens instantly in your browser.
       </motion.h2>
@@ -50,8 +50,8 @@ const Hero: React.FC = () => {
 };
 
 const HeroFeature: React.FC<{ icon: React.ReactNode; text: string }> = ({ icon, text }) => (
-  <div className="flex items-center gap-2 text-slate-500 font-medium">
-    <span className="text-indigo-400">{icon}</span>
+  <div className="flex items-center gap-2 text-slate-400 dark:text-slate-500 font-medium">
+    <span className="text-indigo-500 dark:text-indigo-400">{icon}</span>
     {text}
   </div>
 );

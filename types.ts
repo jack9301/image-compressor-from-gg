@@ -30,3 +30,12 @@ export interface SocialPreset {
   height: number;
   icon: string;
 }
+
+export interface Feedback {
+  id: string;
+  topic: string;
+  content: string;
+  attachmentUrl?: string;
+  createdAt: string;
+  userName?: string;
+}

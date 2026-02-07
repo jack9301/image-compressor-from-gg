@@ -7,8 +7,8 @@ const Features: React.FC = () => {
   return (
     <div className="mt-32 space-y-16">
       <div className="text-center space-y-4">
-        <h2 className="text-3xl font-bold">Everything you need just in one Place.</h2>
-        <p className="text-slate-400 max-w-xl mx-auto">ImageHero combines professional-grade compression with modern utility features.</p>
+        <h2 className="text-3xl font-bold dark:text-white">Everything you need just in one Place.</h2>
+        <p className="text-slate-500 dark:text-slate-400 max-w-xl mx-auto font-medium">ImageHero combines professional-grade compression with modern utility features.</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -50,13 +50,13 @@ const Features: React.FC = () => {
 const FeatureCard: React.FC<{ icon: React.ReactNode; title: string; desc: string }> = ({ icon, title, desc }) => (
   <motion.div
     whileHover={{ y: -5 }}
-    className="glass p-8 rounded-[2rem] border border-white/5 space-y-4"
+    className="glass p-8 rounded-[2rem] space-y-4 transition-theme"
   >
-    <div className="w-12 h-12 rounded-2xl bg-indigo-600/20 text-indigo-400 flex items-center justify-center">
+    <div className="w-12 h-12 rounded-2xl bg-indigo-600/10 dark:bg-indigo-600/20 text-indigo-600 dark:text-indigo-400 flex items-center justify-center">
       {icon}
     </div>
-    <h3 className="text-xl font-bold">{title}</h3>
-    <p className="text-sm text-slate-400 leading-relaxed">{desc}</p>
+    <h3 className="text-xl font-bold dark:text-white">{title}</h3>
+    <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed font-medium">{desc}</p>
   </motion.div>
 );
 

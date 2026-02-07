@@ -12,7 +12,8 @@ import {
   Clock,
   Maximize,
   Eye,
-  X
+  X,
+  Sliders
 } from 'lucide-react';
 import JSZip from 'jszip';
 
@@ -23,6 +24,7 @@ import ImageEditor from './components/ImageEditor';
 import Features from './components/Features';
 import FAQ from './components/FAQ';
 import Footer from './components/Footer';
+import FeedbackSection from './components/FeedbackSection';
 import PrivacyPolicy from './components/PrivacyPolicy';
 import TermsOfService from './components/TermsOfService';
 import AboutUs from './components/AboutUs';
@@ -58,6 +60,27 @@ const App: React.FC = () => {
   });
   const [isProcessing, setIsProcessing] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [showMobileSettings, setShowMobileSettings] = useState(false);
+  const [theme, setTheme] = useState<'light' | 'dark'>(() => {
+    if (typeof window !== 'undefined') {
+      return (localStorage.getItem('theme') as 'light' | 'dark') || 'dark';
+    }
+    return 'dark';
+  });
+
+  // Theme Sync
+  useEffect(() => {
+    const root = window.document.documentElement;
+    const body = window.document.body;
+    if (theme === 'dark') {
+      root.classList.add('dark');
+      body.classList.remove('light');
+    } else {
+      root.classList.remove('dark');
+      body.classList.add('light');
+    }
+    localStorage.setItem('theme', theme);
+  }, [theme]);
 
   // SEO: Update page meta based on current tool
   useEffect(() => {
@@ -134,6 +157,7 @@ const App: React.FC = () => {
 
   const processAll = async () => {
     setIsProcessing(true);
+    setShowMobileSettings(false);
     const updatedImages = await Promise.all(images.map(async (img) => {
       try {
         const result = await processImage(img.file, globalSettings);
@@ -178,17 +202,21 @@ const App: React.FC = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  const toggleTheme = () => {
+    setTheme(prev => prev === 'light' ? 'dark' : 'light');
+  };
+
   const renderToolView = (title: string, description: string) => (
     <motion.div
       key={currentPage}
       initial={{ opacity: 0, x: 10 }}
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: -10 }}
-      className="space-y-12"
+      className="space-y-12 pb-24 lg:pb-0"
     >
       <div className="text-center space-y-4 max-w-2xl mx-auto">
         <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight">{title}</h1>
-        <p className="text-slate-400 text-lg">{description}</p>
+        <p className="text-slate-500 dark:text-slate-400 text-lg">{description}</p>
       </div>
 
       <div id="tool-workspace" className="scroll-mt-24">
@@ -210,9 +238,10 @@ const App: React.FC = () => {
               className="space-y-8"
             >
               <div className="flex flex-col lg:flex-row gap-8 items-start">
-                <div className="w-full lg:w-1/3 glass p-6 rounded-[2rem] sticky top-24">
-                  <div className="flex items-center gap-2 mb-6 border-b border-white/5 pb-4">
-                    <Settings className="w-5 h-5 text-indigo-400" />
+                {/* Sidebar Desktop - Hidden on Mobile Drawer */}
+                <div className="hidden lg:block w-full lg:w-1/3 glass p-6 rounded-[2rem] lg:sticky lg:top-24">
+                  <div className="flex items-center gap-2 mb-6 border-b border-black/5 dark:border-white/5 pb-4">
+                    <Settings className="w-5 h-5 text-indigo-500" />
                     <h2 className="text-xl font-bold">Tool Settings</h2>
                   </div>
                   
@@ -224,11 +253,11 @@ const App: React.FC = () => {
                     mode={currentPage}
                   />
 
-                  <div className="mt-8 pt-8 border-t border-white/10 flex flex-col gap-3">
+                  <div className="mt-8 pt-8 border-t border-black/5 dark:border-white/10 flex flex-col gap-3">
                     <button
                       onClick={processAll}
                       disabled={isProcessing}
-                      className="w-full py-4 px-6 rounded-2xl bg-indigo-600 hover:bg-indigo-500 font-bold transition-all flex items-center justify-center gap-2 disabled:opacity-50 shadow-xl shadow-indigo-600/20"
+                      className="w-full py-4 px-6 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold transition-all flex items-center justify-center gap-2 disabled:opacity-50 shadow-xl shadow-indigo-600/20"
                     >
                       {isProcessing ? (
                         <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent" />
@@ -241,7 +270,7 @@ const App: React.FC = () => {
                     {images.some(img => img.status === 'completed') && (
                       <button
                         onClick={downloadZip}
-                        className="w-full py-4 px-6 rounded-2xl bg-white/5 hover:bg-white/10 font-bold transition-all flex items-center justify-center gap-2 border border-white/10"
+                        className="w-full py-4 px-6 rounded-2xl bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 font-bold transition-all flex items-center justify-center gap-2 border border-black/5 dark:border-white/10"
                       >
                         <Download className="w-5 h-5" />
                         Download All
@@ -250,7 +279,7 @@ const App: React.FC = () => {
                     
                     <button
                       onClick={clearAll}
-                      className="w-full py-3 px-6 rounded-2xl text-slate-500 hover:text-red-400 font-medium transition-all flex items-center justify-center gap-2 group"
+                      className="w-full py-3 px-6 rounded-2xl text-slate-500 hover:text-red-500 font-medium transition-all flex items-center justify-center gap-2 group"
                     >
                       <Trash2 className="w-4 h-4 group-hover:rotate-12 transition-transform" />
                       Clear Workspace
@@ -258,14 +287,101 @@ const App: React.FC = () => {
                   </div>
                 </div>
 
+                {/* Mobile Floating Action Bar */}
+                <div className="lg:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-[60] w-[90%] max-w-sm">
+                  <div className="glass px-4 py-3 rounded-full flex items-center justify-between shadow-2xl border border-white/20">
+                    <button
+                      onClick={() => setShowMobileSettings(true)}
+                      className="p-3 rounded-full bg-black/5 dark:bg-white/5 text-indigo-500 hover:bg-black/10 dark:hover:bg-white/10 transition-all"
+                    >
+                      <Sliders className="w-6 h-6" />
+                    </button>
+                    
+                    <button
+                      onClick={processAll}
+                      disabled={isProcessing}
+                      className="flex-1 mx-3 py-3 rounded-full bg-indigo-600 text-white font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 shadow-xl shadow-indigo-600/20"
+                    >
+                      {isProcessing ? (
+                        <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" />
+                      ) : (
+                        <Zap className="w-4 h-4" />
+                      )}
+                      {isProcessing ? 'Wait...' : 'Process'}
+                    </button>
+
+                    {images.some(img => img.status === 'completed') ? (
+                      <button
+                        onClick={downloadZip}
+                        className="p-3 rounded-full bg-indigo-500/10 text-indigo-500 border border-indigo-500/20"
+                      >
+                        <Download className="w-6 h-6" />
+                      </button>
+                    ) : (
+                      <button
+                        onClick={clearAll}
+                        className="p-3 rounded-full bg-red-500/10 text-red-500 border border-red-500/20"
+                      >
+                        <Trash2 className="w-6 h-6" />
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {/* Mobile Bottom Sheet Settings */}
+                <AnimatePresence>
+                  {showMobileSettings && (
+                    <>
+                      <motion.div 
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        onClick={() => setShowMobileSettings(false)}
+                        className="lg:hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-[70]"
+                      />
+                      <motion.div
+                        initial={{ y: "100%" }}
+                        animate={{ y: 0 }}
+                        exit={{ y: "100%" }}
+                        transition={{ type: "spring", damping: 25, stiffness: 200 }}
+                        className="lg:hidden fixed bottom-0 left-0 right-0 z-[80] glass rounded-t-[2.5rem] p-8 border-t border-white/20 shadow-2xl max-h-[85vh] overflow-y-auto"
+                      >
+                        <div className="w-12 h-1.5 bg-slate-300 dark:bg-slate-700 rounded-full mx-auto mb-8" />
+                        <div className="flex items-center justify-between mb-8">
+                          <h2 className="text-2xl font-black dark:text-white">Settings</h2>
+                          <button onClick={() => setShowMobileSettings(false)} className="p-2 bg-black/5 dark:bg-white/5 rounded-full">
+                            <X className="w-6 h-6" />
+                          </button>
+                        </div>
+                        <ImageEditor 
+                          settings={globalSettings} 
+                          setSettings={setGlobalSettings} 
+                          onProcess={processAll}
+                          isProcessing={isProcessing}
+                          mode={currentPage}
+                        />
+                        <div className="mt-8 pb-4">
+                           <button
+                            onClick={() => setShowMobileSettings(false)}
+                            className="w-full py-4 rounded-2xl bg-indigo-600 text-white font-bold"
+                          >
+                            Done
+                          </button>
+                        </div>
+                      </motion.div>
+                    </>
+                  )}
+                </AnimatePresence>
+
+                {/* Image List - Main Workzone */}
                 <div className="w-full lg:w-2/3 space-y-4">
                   <div className="flex items-center justify-between px-2 mb-2">
-                    <span className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">
+                    <span className="text-xs font-black uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500">
                       Queue ({images.length} {images.length === 1 ? 'Image' : 'Images'})
                     </span>
                     <button 
                       onClick={clearAll}
-                      className="text-[10px] font-black uppercase tracking-widest text-slate-500 hover:text-red-400 flex items-center gap-1.5 transition-colors px-3 py-1.5 rounded-lg hover:bg-red-400/5"
+                      className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 hover:text-red-500 flex items-center gap-1.5 transition-colors px-3 py-1.5 rounded-lg hover:bg-red-500/5"
                     >
                       <Trash2 className="w-3 h-3" />
                       Delete All
@@ -286,9 +402,9 @@ const App: React.FC = () => {
                   
                   <button 
                     onClick={() => document.getElementById('file-input')?.click()}
-                    className="w-full p-12 border-2 border-dashed border-white/10 rounded-[2.5rem] hover:border-indigo-500/50 hover:bg-indigo-500/5 transition-all group flex flex-col items-center justify-center gap-3 text-slate-400"
+                    className="w-full p-12 border-2 border-dashed border-black/10 dark:border-white/10 rounded-[2.5rem] hover:border-indigo-500/50 hover:bg-indigo-500/5 transition-all group flex flex-col items-center justify-center gap-3 text-slate-400"
                   >
-                    <Upload className="w-8 h-8 group-hover:scale-110 transition-transform text-indigo-400" />
+                    <Upload className="w-8 h-8 group-hover:scale-110 transition-transform text-indigo-500" />
                     <span className="font-bold">Add more images to process</span>
                   </button>
                   <input 
@@ -313,6 +429,7 @@ const App: React.FC = () => {
 
       <Features />
       <FAQ />
+      <FeedbackSection />
     </motion.div>
   );
 
@@ -323,18 +440,18 @@ const App: React.FC = () => {
       animate={{ opacity: 1, scale: 1 }}
       className="max-w-4xl mx-auto py-24 text-center space-y-8"
     >
-      <div className="w-24 h-24 bg-indigo-600/10 rounded-[2rem] flex items-center justify-center mx-auto text-indigo-400">
+      <div className="w-24 h-24 bg-indigo-600/10 rounded-[2rem] flex items-center justify-center mx-auto text-indigo-500">
         <Clock className="w-12 h-12" />
       </div>
       <div className="space-y-4">
         <h1 className="text-5xl font-black">{title}</h1>
-        <p className="text-slate-400 text-xl max-w-lg mx-auto leading-relaxed">
+        <p className="text-slate-500 dark:text-slate-400 text-xl max-w-lg mx-auto leading-relaxed">
           We're currently fine-tuning our PDF engine to bring you the same lightning-fast, local-only performance you love. Stay tuned!
         </p>
       </div>
       <button 
         onClick={() => navigateTo('home')}
-        className="px-8 py-4 bg-indigo-600 hover:bg-indigo-500 rounded-2xl font-bold transition-all shadow-xl shadow-indigo-600/20"
+        className="px-8 py-4 bg-indigo-600 hover:bg-indigo-500 text-white rounded-2xl font-bold transition-all shadow-xl shadow-indigo-600/20"
       >
         Go back to Home
       </button>
@@ -376,14 +493,20 @@ const App: React.FC = () => {
             </div>
             <Features />
             <FAQ />
+            <FeedbackSection />
           </motion.div>
         );
     }
   };
 
   return (
-    <div className="min-h-screen bg-[#0f172a] text-slate-200">
-      <Header onNavigate={navigateTo} activePage={currentPage} />
+    <div className="min-h-screen transition-theme">
+      <Header 
+        onNavigate={navigateTo} 
+        activePage={currentPage} 
+        theme={theme} 
+        onToggleTheme={toggleTheme} 
+      />
       
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-20">
         <AnimatePresence mode="wait">
@@ -401,14 +524,14 @@ const ImageLightbox: React.FC<{ url: string; onClose: () => void }> = ({ url, on
     initial={{ opacity: 0 }}
     animate={{ opacity: 1 }}
     exit={{ opacity: 0 }}
-    className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-12 bg-slate-950/90 backdrop-blur-xl"
+    className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-12 bg-slate-900/90 dark:bg-slate-950/90 backdrop-blur-xl"
     onClick={onClose}
   >
     <motion.div
       initial={{ scale: 0.9, opacity: 0 }}
       animate={{ scale: 1, opacity: 1 }}
       exit={{ scale: 0.9, opacity: 0 }}
-      className="relative max-w-full max-h-full glass rounded-[2.5rem] overflow-hidden shadow-2xl p-2 border-white/20"
+      className="relative max-w-full max-h-full glass rounded-[2.5rem] overflow-hidden shadow-2xl p-2 border-black/10 dark:border-white/20"
       onClick={(e) => e.stopPropagation()}
     >
       <button 
@@ -418,7 +541,7 @@ const ImageLightbox: React.FC<{ url: string; onClose: () => void }> = ({ url, on
         <X className="w-6 h-6" />
       </button>
       <img src={url} alt="Processed Image Preview" className="max-w-full max-h-[85vh] object-contain rounded-3xl block mx-auto" />
-      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 px-6 py-2 bg-black/40 backdrop-blur-md rounded-full border border-white/10 text-[10px] font-black uppercase tracking-widest text-slate-300">
+      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 px-6 py-2 bg-black/40 backdrop-blur-md rounded-full border border-white/10 text-[10px] font-black uppercase tracking-widest text-slate-100">
         Full Scale View
       </div>
     </motion.div>
@@ -441,17 +564,17 @@ const ImageCard: React.FC<{
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.95 }}
-      className="glass p-4 sm:p-5 rounded-3xl group relative overflow-hidden border border-white/5"
+      className="glass p-4 sm:p-5 rounded-3xl group relative overflow-hidden transition-theme"
     >
       <div className="flex flex-col sm:flex-row gap-6 items-center">
-        <div className="relative w-28 h-28 sm:w-36 sm:h-36 shrink-0 overflow-hidden rounded-2xl bg-slate-900 border border-white/10 shadow-inner">
+        <div className="relative w-28 h-28 sm:w-36 sm:h-36 shrink-0 overflow-hidden rounded-2xl bg-slate-200 dark:bg-slate-900 border border-black/5 dark:border-white/10 shadow-inner">
           <img 
             src={img.compressedUrl || img.previewUrl} 
             alt={`Preview of ${img.file.name}`} 
             className="w-full h-full object-cover transition-transform group-hover:scale-105"
           />
           {img.status === 'completed' && (
-            <div className="absolute top-2 right-2 p-1.5 bg-green-500 rounded-full shadow-lg border-2 border-slate-900">
+            <div className="absolute top-2 right-2 p-1.5 bg-green-500 rounded-full shadow-lg border-2 border-white dark:border-slate-900">
               <CheckCircle2 className="w-3 h-3 text-white" />
             </div>
           )}
@@ -459,11 +582,11 @@ const ImageCard: React.FC<{
 
         <div className="flex-1 min-w-0 space-y-3 w-full">
           <div className="flex items-center justify-between gap-4">
-            <h3 className="font-bold text-lg truncate text-slate-100">{img.file.name}</h3>
+            <h3 className="font-bold text-lg truncate text-slate-900 dark:text-slate-100">{img.file.name}</h3>
             <button 
               onClick={onRemove}
               aria-label="Remove image"
-              className="p-2 hover:bg-red-500/10 text-slate-500 hover:text-red-400 rounded-xl transition-colors"
+              className="p-2 hover:bg-red-500/10 text-slate-400 dark:text-slate-500 hover:text-red-500 rounded-xl transition-colors"
             >
               <Trash2 className="w-4 h-4" />
             </button>
@@ -471,19 +594,19 @@ const ImageCard: React.FC<{
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1">
-              <p className="text-[10px] text-slate-500 uppercase font-extrabold tracking-widest">Original</p>
+              <p className="text-[10px] text-slate-400 dark:text-slate-500 uppercase font-extrabold tracking-widest">Original</p>
               <div className="flex flex-col">
                 <p className="text-sm font-semibold">{formatSize(img.originalSize)}</p>
-                <p className="text-[10px] font-bold text-slate-600 flex items-center gap-1">
+                <p className="text-[10px] font-bold text-slate-400 dark:text-slate-600 flex items-center gap-1">
                   <Maximize className="w-2.5 h-2.5" />
                   {img.width || '--'} × {img.height || '--'} px
                 </p>
               </div>
             </div>
             <div className="space-y-1">
-              <p className="text-[10px] text-slate-500 uppercase font-extrabold tracking-widest">Processed</p>
+              <p className="text-[10px] text-slate-400 dark:text-slate-500 uppercase font-extrabold tracking-widest">Processed</p>
               <div className="flex flex-col">
-                <p className="text-sm font-bold text-indigo-400">
+                <p className="text-sm font-bold text-indigo-600 dark:text-indigo-400">
                   {img.compressedSize ? formatSize(img.compressedSize) : '--'}
                 </p>
                 {img.status === 'completed' && (
@@ -498,11 +621,11 @@ const ImageCard: React.FC<{
 
           <div className="flex items-center gap-4">
             {img.status === 'completed' && (
-              <div className={`px-3 py-1 text-xs font-black rounded-full ${reduction > 0 ? 'bg-green-500/10 text-green-400' : 'bg-slate-500/10 text-slate-400'}`}>
+              <div className={`px-3 py-1 text-xs font-black rounded-full ${reduction > 0 ? 'bg-green-500/10 text-green-600 dark:text-green-400' : 'bg-slate-500/10 text-slate-400 dark:text-slate-500'}`}>
                 {reduction > 0 ? `-${reduction}% SIZE` : 'SAME SIZE'}
               </div>
             )}
-            <div className={`px-2 py-1 text-[10px] font-black rounded-md bg-white/5 uppercase tracking-tighter ${img.status === 'idle' ? 'text-slate-500 animate-pulse' : 'text-slate-400'}`}>
+            <div className={`px-2 py-1 text-[10px] font-black rounded-md bg-black/5 dark:bg-white/5 uppercase tracking-tighter ${img.status === 'idle' ? 'text-slate-400 dark:text-slate-500 animate-pulse' : 'text-slate-600 dark:text-slate-400'}`}>
               {img.status === 'idle' ? 'In Queue' : img.status === 'processing' ? 'Processing...' : 'Ready for export'}
             </div>
           </div>
@@ -513,7 +636,7 @@ const ImageCard: React.FC<{
             <>
               <button
                 onClick={() => onPreview(img.compressedUrl!)}
-                className="w-full sm:w-auto px-6 py-3 bg-white/5 hover:bg-white/10 text-indigo-400 font-bold rounded-xl transition-all flex items-center justify-center gap-2 border border-white/10"
+                className="w-full sm:w-auto px-6 py-3 bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 text-indigo-600 dark:text-indigo-400 font-bold rounded-xl transition-all flex items-center justify-center gap-2 border border-black/5 dark:border-white/10"
               >
                 <Eye className="w-4 h-4" />
                 Preview
@@ -528,7 +651,7 @@ const ImageCard: React.FC<{
               </a>
             </>
           ) : (
-             <div className="px-6 py-3 text-slate-500 text-sm font-bold flex items-center justify-center gap-2 border border-dashed border-white/10 rounded-xl">
+             <div className="px-6 py-3 text-slate-400 dark:text-slate-500 text-sm font-bold flex items-center justify-center gap-2 border border-dashed border-black/10 dark:border-white/10 rounded-xl">
                <Info className="w-4 h-4" />
                Pending
              </div>
