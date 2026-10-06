@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    
+    <!-- SEO Meta Tags -->
+    <title>ImageHero | Free Online Image Compressor, Resizer & Converter</title>
+    <meta name="description" content="Compress, resize, and convert images 100% privately in your browser. No server uploads. Fast, batch processing for JPEG, PNG, and WebP with no quality loss." />
+    <meta name="keywords" content="image compressor, image resizer, convert png to webp, reduce image size, private image optimizer, local image processing, bulk image resizer" />
+    <link rel="canonical" href="https://imagehero.app" />
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://imagehero.app" />
+    <meta property="og:title" content="ImageHero | Professional Private Image Suite" />
+    <meta property="og:description" content="The fastest, most secure way to optimize your images. No uploads, total privacy, professional results." />
+    <meta property="og:image" content="https://imagehero.app/og-image.png" />
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image" />
+    <meta property="twitter:url" content="https://imagehero.app" />
+    <meta property="twitter:title" content="ImageHero | Professional Private Image Suite" />
+    <meta property="twitter:description" content="Optimized, high-speed, and free. Resize, convert and compress images instantly in your browser." />
+    <meta property="twitter:image" content="https://imagehero.app/og-image.png" />
+
+    <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            colors: {
+              slate: {
+                950: '#0f172a',
+              }
+            }
+          }
+        }
+      }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- JSON-LD Structured Data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "ImageHero",
+      "operatingSystem": "Web Browser",
+      "applicationCategory": "MultimediaApplication",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      },
+      "description": "Professional-grade image compression, resizing, and conversion tool that runs entirely in the client-side browser for maximum privacy and speed.",
+      "featureList": "Batch compression, Custom resizing, Social media presets, Format conversion (WebP, PNG, JPG), Zero-upload privacy."
+    }
+    </script>
+
+    <style>
+      body {
+        font-family: 'Inter', sans-serif;
+        overflow-x: hidden;
+      }
+      .transition-theme {
+        transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+      }
+      .glass {
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+      }
+      /* Dark (Default) */
+      .glass {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+      /* Light mode override for glass via body class */
+      .light .glass {
+        background: rgba(255, 255, 255, 0.7);
+        border: 1px solid rgba(0, 0, 0, 0.05);
+      }
+      .purple-gradient {
+        background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+      }
+      .text-gradient {
+        background: linear-gradient(to right, #818cf8, #c084fc);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+      ::-webkit-scrollbar {
+        width: 8px;
+      }
+      ::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      .dark ::-webkit-scrollbar-track {
+        background: #0f172a;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #94a3b8;
+        border-radius: 10px;
+      }
+      .dark ::-webkit-scrollbar-thumb {
+        background: #334155;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: #64748b;
+      }
+    </style>
+  <script type="importmap">
+{
+  "imports": {
+    "react": "https://esm.sh/react@^19.2.3",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
+    "react/": "https://esm.sh/react@^19.2.3/",
+    "framer-motion": "https://esm.sh/framer-motion@^12.29.2",
+    "lucide-react": "https://esm.sh/lucide-react@^0.563.0",
+    "jszip": "https://esm.sh/jszip@^3.10.1"
+  }
+}
+</script>
+<link rel="stylesheet" href="/index.css">
+</head>
+  <body class="transition-theme bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-200">
+    <div id="root"></div>
+  <script type="module" src="/index.tsx"></script>
+</body>
+</html>
